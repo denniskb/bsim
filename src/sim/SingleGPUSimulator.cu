@@ -50,6 +50,7 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 	FILE *ii_file = openFile("ii.gpu.data", "w+");
 	FILE *fire_file = openFile("fire.gpu.log", "w+");
 	FILE *log_file = openFile("sim.gpu.log", "w+");
+	fprintf(log_file, "%d\n", _network->_totalNeuronNum);
 
 	//findCudaDevice(0, NULL);
 	checkCudaErrors(cudaSetDevice(0));
@@ -63,7 +64,6 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 	printf("NeuronNum: %d, SynapseNum: %d\n", totalNeuronNum, totalSynapseNum);
 
 	int maxDelay = pNetCPU->pConnection->maxDelay;
-	int deltaDelay = pNetCPU->pConnection->maxDelay - pNetCPU->pConnection->minDelay + 1;
 	printf("maxDelay: %d minDelay: %d\n", pNetCPU->pConnection->maxDelay, pNetCPU->pConnection->minDelay);
 
 
@@ -158,8 +158,12 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 		// }
 #endif
 
+		std::sort(& buffers->c_neuronsFired[0], & buffers->c_neuronsFired[copySize]);
+
+		auto delim = "";
 		for (int i=0; i<copySize; i++) {
-			fprintf(log_file, "%d ", buffers->c_neuronsFired[i]);
+			fprintf(log_file, "%s%d", delim, buffers->c_neuronsFired[i]);
+			delim = ",";
 		}
 		fprintf(log_file, "\n");
 

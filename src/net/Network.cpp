@@ -4,6 +4,7 @@
  */
 
 #include <chrono>
+#include <cmath>
 
 //#include "utils.h"
 #include "Network.h"
@@ -285,7 +286,7 @@ int Network::connect(int populationIDSrc, int neuronIDSrc, int populationIDDst, 
 
 int Network::reset(SimInfo &info)
 {
-	maxDelaySteps = static_cast<int>(round(maxDelay/info.dt));
+	maxDelaySteps = static_cast<int>(std::round(maxDelay/info.dt));
 	vector<SynapseBase*>::iterator iterS;
 	vector<NeuronBase*>::iterator iterN;
 	vector<PopulationBase*>::iterator iterP;

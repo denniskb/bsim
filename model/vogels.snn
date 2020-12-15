@@ -1,0 +1,24 @@
+@neuron Vogels:    # Define the neuron type
+	@parameter:         # Neuron parameters
+		real : V, Gex, Gin
+		int : Twait 
+	@func update: 	    # Neuron update function
+		@input:         # Excitatory and inhibitory input currents,
+			real: e_input, i_input, dt   # timestep 
+		@output:        # Whether the neuron fires or not
+			boolean : fired
+
+			if --Twait <= 0:
+				if V > -0.05
+					V = -0.06
+					Twait = 50
+					fired = true
+				else:
+					V += ( ( -0.05 - V ) + Gex * ( 0 - V ) + Gin * ( -0.08 - V ) + 0.02 ) * ( dt * 50 );
+			
+			Gex -= Gex * ( dt * 200 )
+			Gin -= Gin * ( dt * 100 )
+
+			# TODO: Normalize input currents with respect to network size
+			Gex += e_input
+			Gin += i_input

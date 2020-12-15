@@ -78,6 +78,7 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 		printf("ERROR: Open file GSim.log failed\n");
 		return -1;
 	}
+	fprintf(log_file, "%d\n", network->totalNeuronNum);
 
 	//findCudaDevice(0, NULL);
 	checkCudaErrors(cudaSetDevice(0));
@@ -215,9 +216,13 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 		fprintf(ie_file, "\n");
 		fprintf(ii_file, "\n");
 
+		std::sort(& buffers->c_neuronsFired[0], & buffers->c_neuronsFired[copySize]);
+		auto delim = "";
 		for (int i=0; i<copySize; i++) {
-			fprintf(log_file, "%d ", buffers->c_neuronsFired[i]);
+			fprintf(log_file, "%s%d", delim, buffers->c_neuronsFired[i]);
+			delim = ",";
 		}
+		// if (copySize > 0)
 		fprintf(log_file, "\n");
 
 		//LOG SYNAPSE

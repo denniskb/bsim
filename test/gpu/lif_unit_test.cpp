@@ -6,9 +6,29 @@ using namespace std;
 using namespace spice::util;
 
 
-void connect(Network & net, int src_pop, int dst_pop, int src_sz, int dst_sz, float p)
-{
+static ulong_ seed = 1337;
 
+
+void connect(Network & net, int src_pop, int dst_pop, int src_sz, int dst_sz, float p, float w, float d)
+{
+	xoroshiro128p gen(seed++);
+	std::vector<float> neighbors(dst_sz);
+
+	for (int src = 0; src < src_sz; src++)
+	{
+		int const degree = binornd(gen, dst_sz, p);
+		
+		float total = exprnd(gen);
+		for (int i = 0; i < degree; i++)
+		{
+			neighbors[i] = total;
+			total += exprnd(gen);
+		}
+
+		float const scale = (dst_sz - degree) / total;
+		for (int i = 0; i < degree; i++)
+			net.connect(src_pop, src, dst_pop, static_cast<int>(neighbors[i] * scale) + i, w, d);
+	}
 }
 
 
@@ -19,20 +39,10 @@ int main(int argc, char **argv)
 	auto pn0 = c.createPopulation(N, CompositeNeuron<PoissonNeuron, StaticSynapse>(PoissonNeuron(10, 0), 1, 1));
 	auto pn1 = c.createPopulation(N, LIF_brian(LIFENeuron(0.0, 0.0, 0.0, 0.9, 50.0e-3, 0.0, 1.0, 1.0, 0.5, 100.0e-1), 1, 1));
 
-	/*mt19937 gen;
-	gen.seed(1337);
-	uniform_real_distribution<> iif;
-	for (int src = 0; src < N; src++)
-		for (int dst = 0; dst < N; dst++)
-			if (iif(gen) < 0.01)
-				c.connect(0, src, 1, dst, 0.1, 0.01);*/
-
-	//c.connect(pn0, pn1, 0.01, 0.01, Excitatory);
-
-	c.connect(0, 2, 0, 7, 0.1, 0.01);
+	connect(c, 0, 1, N, N, 0.01f, 0.005f, 0.01f);
 
 	SGSim sg(&c, 0.01);
-	sg.run(0.1);
+	sg.run(1);
 
 	return 0;
 } 

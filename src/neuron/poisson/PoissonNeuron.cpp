@@ -99,7 +99,7 @@ int PoissonNeuron::hardCopy(void *data, int idx, int base)
 	p->p_end_cycle[idx] = endCycle;
 	p->p_refrac_step[idx] = refract_step;
 
-	return 0;
+	return 1;
 }
 
 int PoissonNeuron::getData(void *p)

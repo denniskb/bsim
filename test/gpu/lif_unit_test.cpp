@@ -9,7 +9,14 @@ using namespace spice::util;
 static ulong_ seed = 1337;
 
 
-void connect(Network & net, int src_pop, int dst_pop, int src_sz, int dst_sz, float p, float w, float d)
+void connect(Network & net,
+             int const src_pop,
+			 int const dst_pop,
+			 int const src_sz,
+			 int const dst_sz,
+			 float const p,
+			 float const w,
+			 float const d)
 {
 	xoroshiro128p gen(seed++);
 	std::vector<float> neighbors(dst_sz);
@@ -34,15 +41,23 @@ void connect(Network & net, int src_pop, int dst_pop, int src_sz, int dst_sz, fl
 
 int main(int argc, char **argv)
 {
-	const int N = 10000;
+	const int N = 20000;
 	Network c;
-	auto pn0 = c.createPopulation(N, CompositeNeuron<PoissonNeuron, StaticSynapse>(PoissonNeuron(10, 0), 1, 1));
-	auto pn1 = c.createPopulation(N, LIF_brian(LIFENeuron(0.0, 0.0, 0.0, 0.9, 50.0e-3, 0.0, 1.0, 1.0, 0.5, 100.0e-1), 1, 1));
+	auto P = c.createPopulation(N*5/10, CompositeNeuron<PoissonNeuron, StaticSynapse>(PoissonNeuron(20, 0), 1, 1));
+	auto E = c.createPopulation(N*4/10, CompositeNeuron<LIFENeuron, StaticSynapse>(LIFENeuron(0.0, 0.0, 0.0, 1.0e-1, 50.0e-3, 0.0, 1.0, 1.0, 15.0e-3, 100.0e-1), 1, 1));
+	auto I = c.createPopulation(N*1/10, CompositeNeuron<LIFENeuron, StaticSynapse>(LIFENeuron(0.0, 0.0, 0.0, 1.0e-1, 50.0e-3, 0.0, 1.0, 1.0, 15.0e-3, 100.0e-1), 1, 1));
 
-	connect(c, 0, 1, N, N, 0.01f, 0.005f, 0.01f);
+	connect(c, 0, 1, P->getNum(), E->getNum(), 0.1f, 0.0001f, 0.0015f); // P->E
+	connect(c, 0, 2, P->getNum(), I->getNum(), 0.1f, 0.0001f, 0.0015f); // P->I
 
-	SGSim sg(&c, 0.01);
-	sg.run(1);
+	connect(c, 1, 1, E->getNum(), E->getNum(), 0.1f, 0.0001f, 0.0015f); // E->E
+	connect(c, 1, 2, E->getNum(), I->getNum(), 0.1f, 0.0001f, 0.0015f); // E->I
+
+	connect(c, 2, 1, I->getNum(), E->getNum(), 0.1f, -0.0005f, 0.0015f); // I->E
+	connect(c, 2, 2, I->getNum(), I->getNum(), 0.1f, -0.0005f, 0.0015f); // I->I
+
+	SGSim sg(&c, 0.0001f);
+	sg.run(0.1f);
 
 	return 0;
 } 

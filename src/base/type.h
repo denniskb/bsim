@@ -17,6 +17,7 @@ enum Type {
 	LIFE,
 	TJ,
 	Static,
+	LIFEB,
 	TYPESIZE
 }; 
 

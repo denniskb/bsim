@@ -9,6 +9,7 @@
 #include "../src/neuron/poisson/GPoissonNeurons.h"
 #include "../src/neuron/array/GArrayNeurons.h"
 #include "../src/neuron/lif/GLIFENeurons.h"
+#include "../src/neuron/lifb/GLIFEBNeurons.h"
 #include "../src/neuron/max/GMaxNeurons.h"
 #include "../src/neuron/tj/GTJNeurons.h"
 

@@ -4,6 +4,7 @@
  */
 
 #include "../neuron/lif/GLIF.h"
+#include "../neuron/lifb/GLIFB.h"
 #include "../neuron/tj/GTJ.h"
 #include "../neuron/max/GMax.h"
 #include "../neuron/poisson/GPoisson.h"
@@ -73,6 +74,15 @@ int cudaUpdateStatic(void *data, int num, int start_id, BlockSize *pSize)
 	return 0;
 }
 
+int cudaUpdateLIFEB(void *data, int num, int start_id, BlockSize *pSize)
+{
+	find_lifeb_neuron<<<pSize->gridSize, pSize->blockSize>>>((GLIFEBNeurons*)data, num, start_id);
+	update_lifeb_neuron<<<pSize->gridSize, pSize->blockSize>>>((GLIFEBNeurons*)data, num, start_id);
+	//update_dense_life_neuron<<<pSize->gridSize, pSize->blockSize>>>((GLIFENeurons*)data, num, start_id);
+
+	return 0;
+}
+
 int addCrossNeurons(int *ids, int num)
 {
 	add_cross_neuron<<<(num+MAXBLOCKSIZE-1)/MAXBLOCKSIZE, MAXBLOCKSIZE>>>(ids, num);
@@ -122,6 +132,10 @@ BlockSize * getBlockSize(int nSize, int sSize)
 	//cudaOccupancyMaxPotentialBlockSize(&(ret[Static].minGridSize), &(ret[Static].blockSize), update_static_hit, 0, sSize); 
 	ret[Static].blockSize = 128;
 	ret[Static].gridSize = (upzero_else_set_one(nSize) + (ret[Static].blockSize) - 1) / (ret[Static].blockSize);
+
+	ret[LIFEB].blockSize = ret[LIFE].blockSize;
+	ret[LIFEB].gridSize = ret[LIFE].gridSize;
+	ret[LIFEB].minGridSize = ret[LIFE].minGridSize;
 
 	return ret;
 }

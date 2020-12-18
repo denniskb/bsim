@@ -26,7 +26,7 @@ __global__ void update_poisson_neuron(GPoissonNeurons *d_neurons, int num, int s
 	__syncthreads();
 
 	int tid = blockIdx.x * blockDim.x + threadIdx.x;
-	for (int idx = tid; idx < num; idx += blockDim.x * gridDim.x) {
+	for (int idx = tid; idx < num / blockDim.x * blockDim.x; idx += blockDim.x * gridDim.x) {
 		bool fired = false;
 		int test_loc = 0;
 

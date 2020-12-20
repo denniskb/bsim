@@ -16,8 +16,6 @@ build/*
 !build/bin/*.sh
 !build/bin
 !build
-src/utils/TypeFunc.cpp
-src/utils/TypeFunc.cu
 *.tmp
 *.swp
 *.test

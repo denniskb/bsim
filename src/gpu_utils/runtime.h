@@ -34,7 +34,7 @@ __global__ void reset_active_synapse();
 
 __global__ void add_cross_neuron(int *ids, int num);
 
-__global__ void deliver_neurons(int *idx2index, int *crossnode_index2idx, int *global_cross_data, int *fired_n_num, int node_num);
+__global__ void deliver_neurons(int const *idx2index, int const *crossnode_index2idx, int *global_cross_data, int *fired_n_num, int node_num);
 
 
 #endif /* GPU_KERNEL_H */

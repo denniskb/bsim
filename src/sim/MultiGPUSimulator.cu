@@ -76,7 +76,6 @@ int MultiGPUSimulator::run(real time, FireInfo &log)
 		node_nets[i]._node_num = device_count;
 		node_nets[i]._dt = dt;
 
-
 		int ret = pthread_create(&(thread_ids[i]), NULL, &run_thread, (void*)&(node_nets[i]));
 		assert(ret == 0);
 	}
@@ -115,7 +114,7 @@ void * run_thread(void *para) {
 	int nodeSynapseNum = pCpuNet->synapseNums[sTypeNum];
 	printf("Thread %d NeuronTypeNum: %d, SynapseTypeNum: %d\n", network->_node_idx, nTypeNum, sTypeNum);
 	printf("Thread %d NeuronNum: %d, SynapseNum: %d\n", network->_node_idx, nodeNeuronNum, nodeSynapseNum);
-
+	
 	//int dataOffset = network->_node_idx * network->_node_num;
 	//int dataIdx = network->_node_idx * network->_node_num + network->_node_idx;
 
@@ -129,6 +128,7 @@ void * run_thread(void *para) {
 	BlockSize *updateSize = getBlockSize(allNeuronNum, nodeSynapseNum);
 
 #ifdef LOG_DATA
+	fprintf(log_file, "%d\n", allNeuronNum);
 	real *c_vm = hostMalloc<real>(nodeNeuronNum);
 	int life_idx = getIndex(pCpuNet->nTypes, nTypeNum, LIFE);
 	int copy_idx = -1;
@@ -244,8 +244,11 @@ void * run_thread(void *para) {
 		//copy_time += (t9.tv_sec - t8.tv_sec) + (t9.tv_usec - t8.tv_usec)/1000000.0;
 
 #ifdef LOG_DATA
+		std::sort(& buffers->c_neuronsFired[0], & buffers->c_neuronsFired[copySize]);
+		auto delim = "";
 		for (int i=0; i<copySize; i++) {
-			fprintf(log_file, "%d ", buffers->c_neuronsFired[i]);
+			fprintf(log_file, "%s%d", delim, buffers->c_neuronsFired[i]);
+			delim = ",";
 		}
 		fprintf(log_file, "\n");
 

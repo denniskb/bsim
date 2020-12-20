@@ -127,27 +127,18 @@ __global__ void curand_setup_kernel(curandState *state, int num)
 
 __global__ void add_cross_neuron(int *ids, int num)
 {
-	int tid = blockIdx.x * blockDim.x + threadIdx.x;
-	if (tid < num) {
-		gFiredTable[gFiredTableCap*gCurrentIdx + gFiredTableSizes[gCurrentIdx] + tid] = ids[tid];
-	}
-	__syncthreads();
-
-	if (tid == 0) {
+	if(ids) {
+		int tid = blockIdx.x * blockDim.x + threadIdx.x;
+		if (tid < num) {
+			gFiredTable[gFiredTableCap*gCurrentIdx + gFiredTableSizes[gCurrentIdx] + tid] = ids[tid];
+		}
+	} else {
 		gFiredTableSizes[gCurrentIdx] += num;
 	}
 }
 
-__global__ void deliver_neurons(int *idx2index, int *crossnode_index2idx, int *global_cross_data, int *fired_n_num, int node_num)
+__global__ void deliver_neurons(int const *idx2index, int const *crossnode_index2idx, int *global_cross_data, int *fired_n_num, int node_num)
 {
-	__shared__ int cross_neuron_id[MAXBLOCKSIZE];
-	__shared__ volatile int cross_cnt;
-
-	if (threadIdx.x == 0) {
-		cross_cnt = 0;
-	}
-	__syncthreads();
-
 	int tid = blockIdx.x * blockDim.x + threadIdx.x;
 
 	int fired_size = gFiredTableSizes[gCurrentIdx];
@@ -158,23 +149,10 @@ __global__ void deliver_neurons(int *idx2index, int *crossnode_index2idx, int *g
 			if (tmp >= 0) {
 				int map_nid = crossnode_index2idx[tmp*node_num + node];
 				if (map_nid >= 0) {
-					int test_loc = atomicAdd((int*)&cross_cnt, 1);
-					if (test_loc < MAXBLOCKSIZE) {
-						cross_neuron_id[test_loc] = map_nid;
-					}
+					global_cross_data[gFiredTableCap*node + atomicAdd(&fired_n_num[node], 1)] = map_nid;
 				}
 			}
-			__syncthreads();
-
-			if (cross_cnt > 0) {
-				commit2globalTable(cross_neuron_id, cross_cnt, global_cross_data, &fired_n_num[node], gFiredTableCap*node);
-				if (threadIdx.x == 0) {
-					cross_cnt = 0;
-				}
-			}
-			__syncthreads();
 		}
-		__syncthreads();
 	}
 }
 

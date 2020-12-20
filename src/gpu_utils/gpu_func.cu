@@ -86,6 +86,7 @@ int cudaUpdateLIFEB(void *data, int num, int start_id, BlockSize *pSize)
 int addCrossNeurons(int *ids, int num)
 {
 	add_cross_neuron<<<(num+MAXBLOCKSIZE-1)/MAXBLOCKSIZE, MAXBLOCKSIZE>>>(ids, num);
+	add_cross_neuron<<<1, 1>>>(nullptr, num);
 	return 0;
 }
 

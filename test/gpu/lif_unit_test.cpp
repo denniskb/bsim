@@ -56,7 +56,7 @@ int main(int argc, char **argv)
 	connect(c, 2, 1, I->getNum(), E->getNum(), 0.1f, -0.0005f, 0.0015f); // I->E
 	connect(c, 2, 2, I->getNum(), I->getNum(), 0.1f, -0.0005f, 0.0015f); // I->I
 
-	SGSim sg(&c, 0.0001f);
+	MGSim sg(&c, 0.0001f);
 	sg.run(0.1f);
 
 	return 0;

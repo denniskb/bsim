@@ -39,24 +39,32 @@ void connect(Network & net,
 }
 
 
+void make_brunel(Network & c, int const n)
+{
+	auto P = c.createPopulation(n*5/10, CompositeNeuron<PoissonNeuron, StaticSynapse>(PoissonNeuron(20, 0), 1, 1));
+	auto E = c.createPopulation(n*4/10, CompositeNeuron<LIFEBNeuron, StaticSynapse>(LIFEBNeuron(0, 0, 0, 0, 0, 0.002f, 0, 0, 0.02f, 0), 1, 1));
+	auto I = c.createPopulation(n*1/10, CompositeNeuron<LIFEBNeuron, StaticSynapse>(LIFEBNeuron(0, 0, 0, 0, 0, 0.002f, 0, 0, 0.02f, 0), 1, 1));
+
+	float const Wex =  0.0001 * 20000 / n;
+	float const Win = -0.0005 * 20000 / n;
+
+	connect(c, 0, 1, P->getNum(), E->getNum(), 0.1f, Wex, 0.0015f); // P->E
+	connect(c, 0, 2, P->getNum(), I->getNum(), 0.1f, Wex, 0.0015f); // P->I
+
+	connect(c, 1, 1, E->getNum(), E->getNum(), 0.1f, Wex, 0.0015f); // E->E
+	connect(c, 1, 2, E->getNum(), I->getNum(), 0.1f, Wex, 0.0015f); // E->I
+
+	connect(c, 2, 1, I->getNum(), E->getNum(), 0.1f, Win, 0.0015f); // I->E
+	connect(c, 2, 2, I->getNum(), I->getNum(), 0.1f, Win, 0.0015f); // I->I
+}
+
+
 int main(int argc, char **argv)
 {
-	const int N = 20000;
 	Network c;
-	auto P = c.createPopulation(N*5/10, CompositeNeuron<PoissonNeuron, StaticSynapse>(PoissonNeuron(20, 0), 1, 1));
-	auto E = c.createPopulation(N*4/10, CompositeNeuron<LIFEBNeuron, StaticSynapse>(LIFEBNeuron(0.0, 0.0, 0.0, 1.0e-1, 50.0e-3, 0.0, 1.0, 1.0, 15.0e-3, 100.0e-1), 1, 1));
-	auto I = c.createPopulation(N*1/10, CompositeNeuron<LIFEBNeuron, StaticSynapse>(LIFEBNeuron(0.0, 0.0, 0.0, 1.0e-1, 50.0e-3, 0.0, 1.0, 1.0, 15.0e-3, 100.0e-1), 1, 1));
+	make_brunel(c, 100000);
 
-	connect(c, 0, 1, P->getNum(), E->getNum(), 0.1f, 0.0001f, 0.0015f); // P->E
-	connect(c, 0, 2, P->getNum(), I->getNum(), 0.1f, 0.0001f, 0.0015f); // P->I
-
-	connect(c, 1, 1, E->getNum(), E->getNum(), 0.1f, 0.0001f, 0.0015f); // E->E
-	connect(c, 1, 2, E->getNum(), I->getNum(), 0.1f, 0.0001f, 0.0015f); // E->I
-
-	connect(c, 2, 1, I->getNum(), E->getNum(), 0.1f, -0.0005f, 0.0015f); // I->E
-	connect(c, 2, 2, I->getNum(), I->getNum(), 0.1f, -0.0005f, 0.0015f); // I->I
-
-	MGSim sg(&c, 0.0001f);
+	SGSim sg(&c, 0.0001f);
 	sg.run(0.1f);
 
 	return 0;

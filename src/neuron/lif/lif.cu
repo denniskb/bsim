@@ -21,6 +21,9 @@ __global__ void find_life_neuron(GLIFENeurons *d_neurons, int num, int start_id)
 		//bool actived = false;
 		int test_loc = 0;
 
+		d_neurons->p_i_E[idx] += gNeuronInput[idx+start_id] - d_neurons->p_i_E[idx] * 0.02f;
+		d_neurons->p_i_I[idx] += -gNeuronInput_I[idx+start_id] - d_neurons->p_i_I[idx] * 0.01f;
+
 		bool actived = d_neurons->p_refrac_step[idx] <= 0;
 
 		if (actived) {
@@ -92,12 +95,9 @@ __global__ void update_life_neuron(GLIFENeurons *d_neurons, int num, int start_i
 		//real I = gNeuronInput[gnid] + d_neurons->p_i_tmp[nid];
 		//d_neurons->p_vm[nid] = d_neurons->p_vm[nid] * d_neurons->p_C1[nid] + d_neurons->p_C2[nid] * I;
 
-		d_neurons->p_vm[nid] = d_neurons->p_Cm[nid] * d_neurons->p_vm[nid] + d_neurons->p_v_tmp[nid] + d_neurons->p_i_E[nid] * d_neurons->p_C_E[nid] + d_neurons->p_i_I[nid] * d_neurons->p_C_I[nid];
+		//d_neurons->p_vm[nid] = d_neurons->p_Cm[nid] * d_neurons->p_vm[nid] + d_neurons->p_v_tmp[nid] + d_neurons->p_i_E[nid] * d_neurons->p_C_E[nid] + d_neurons->p_i_I[nid] * d_neurons->p_C_I[nid];
 
 		//d_neurons->p_i_syn[nid] = 0;
-
-		d_neurons->p_i_E[nid] *= d_neurons->p_CE[nid];
-		d_neurons->p_i_I[nid] *= d_neurons->p_CI[nid];
 
 		fired = d_neurons->p_vm[nid] >= d_neurons->p_v_thresh[nid];
 
@@ -114,8 +114,11 @@ __global__ void update_life_neuron(GLIFENeurons *d_neurons, int num, int start_i
 			d_neurons->p_vm[nid] = d_neurons->p_v_reset[nid];
 		} else {
 			gXInput[gnid] += gNeuronInput[gnid] + gNeuronInput_I[gnid];
-			d_neurons->p_i_E[nid] += gNeuronInput[gnid];
-			d_neurons->p_i_I[nid] += gNeuronInput_I[gnid];
+			float const V = d_neurons->p_vm[nid];
+			d_neurons->p_vm[nid] += ((-0.06f - V) +
+			                        d_neurons->p_i_E[nid] * (0 - V) +
+			                        d_neurons->p_i_I[nid] * (-0.08f - V) +
+			                        0.02f) * 0.005f;
 		}
 
 		gNeuronInput[gnid] = 0;

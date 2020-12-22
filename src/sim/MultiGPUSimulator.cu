@@ -152,12 +152,12 @@ void * run_thread(void *para) {
 	}
 #endif
 
-	for (int i=0; i<nTypeNum; i++) {
+	/*for (int i=0; i<nTypeNum; i++) {
 		cout << "Thread " << network->_node_idx << " " << pCpuNet->nTypes[i] << ": <<<" << updateSize[c_pGpuNet->nTypes[i]].gridSize << ", " << updateSize[c_pGpuNet->nTypes[i]].blockSize << ">>>" << endl;
 	}
 	for (int i=0; i<sTypeNum; i++) {
 		cout << "Thread " << network->_node_idx << " " << pCpuNet->sTypes[i] << ": <<<" << updateSize[c_pGpuNet->sTypes[i]].gridSize << ", " << updateSize[c_pGpuNet->sTypes[i]].blockSize << ">>>" << endl;
-	}
+	}*/
 
 	//int * c_g_cross_id = gpuMalloc<int>(global_cross_data[dataIdx]._max_n_num); 
 

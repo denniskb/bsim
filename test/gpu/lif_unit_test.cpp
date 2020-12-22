@@ -40,7 +40,7 @@ void connect(Network & net,
 
 void make_brunel(Network & c, int const n)
 {
-	auto P = c.createPopulation(n*5/10, CompositeNeuron<PoissonNeuron, StaticSynapse>(PoissonNeuron(20, 0), 1, 1));
+	auto P = c.createPopulation(n*5/10, CompositeNeuron<PoissonNeuron, StaticSynapse>(PoissonNeuron(0.002f, 0), 1, 1));
 	auto E = c.createPopulation(n*4/10, CompositeNeuron<LIFEBNeuron, StaticSynapse>(LIFEBNeuron(0, 0, 0, 0, 0, 0.002f, 0, 0, 0.02f, 0), 1, 1));
 	auto I = c.createPopulation(n*1/10, CompositeNeuron<LIFEBNeuron, StaticSynapse>(LIFEBNeuron(0, 0, 0, 0, 0, 0.002f, 0, 0, 0.02f, 0), 1, 1));
 
@@ -72,11 +72,18 @@ void make_vogels(Network & c, int const n)
 	connect(c, 1, 1, I->getNum(), I->getNum(), 0.02f, Win, 0.0008f); // I->I
 }
 
+void make_synth(Network & c, int const n, float const p_fire, float const p_connect)
+{
+	auto P = c.createPopulation(n, CompositeNeuron<PoissonNeuron, StaticSynapse>(PoissonNeuron(p_fire, 0), 1, 1));
+	connect(c, 0, 0, P->getNum(), P->getNum(), p_connect, 1, 0.0001f); // E->E
+}
+
 int main(int argc, char **argv)
 {
 	Network c;
 	//make_brunel(c, 20000);
-	make_vogels(c, 4000);
+	//make_vogels(c, 4000);
+	make_synth(c, 2000000, 0.001, 0.00001);
 
 	SGSim sg(&c, 0.0001f);
 	sg.run(0.1f);

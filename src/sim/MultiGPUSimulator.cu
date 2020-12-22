@@ -10,6 +10,7 @@
 #include <iostream>
 
 #include "../utils/utils.h"
+#include "../utils/timer.h"
 #include "../utils/TypeFunc.h"
 #include "../gpu_utils/mem_op.h"
 #include "../gpu_utils/gpu_func.h"
@@ -23,6 +24,7 @@ using std::cout;
 using std::endl;
 
 pthread_barrier_t cycle_barrier;
+pthread_barrier_t setup_barrier;
 
 CrossNodeDataGPU * global_cross_data_gpu;
 
@@ -35,9 +37,9 @@ MultiGPUSimulator::~MultiGPUSimulator()
 }
 
 void *run_thread(void *para);
-
 int MultiGPUSimulator::run(real time, FireInfo &log)
 {
+	timer t;
 	int sim_cycle = round(time/dt);
 	reset();
 
@@ -59,6 +61,7 @@ int MultiGPUSimulator::run(real time, FireInfo &log)
 	checkCudaErrors(cudaSetDevice(0));
 
 	pthread_barrier_init(&cycle_barrier, NULL, device_count);
+	pthread_barrier_init(&setup_barrier, NULL, device_count+1);
 
 	MultiNetwork multiNet(network, device_count);
 	DistriNetwork *node_nets = multiNet.buildNetworks();
@@ -80,11 +83,18 @@ int MultiGPUSimulator::run(real time, FireInfo &log)
 		assert(ret == 0);
 	}
 
+	pthread_barrier_wait(&setup_barrier);
+	{
+		double tsetup = t.stop();
+		printf("\"setuptime\": %f,\n", tsetup);
+	}
+
 	for (int i=0; i<device_count; i++) {
 		pthread_join(thread_ids[i], NULL);
 	}
 
 	pthread_barrier_destroy(&cycle_barrier);
+	pthread_barrier_destroy(&setup_barrier);
 
 	return 0;
 }
@@ -112,14 +122,14 @@ void * run_thread(void *para) {
 	int nodeNeuronNum = pCpuNet->neuronNums[nTypeNum];
 	int allNeuronNum = pCpuNet->pN2SConnection->n_num;
 	int nodeSynapseNum = pCpuNet->synapseNums[sTypeNum];
-	printf("Thread %d NeuronTypeNum: %d, SynapseTypeNum: %d\n", network->_node_idx, nTypeNum, sTypeNum);
-	printf("Thread %d NeuronNum: %d, SynapseNum: %d\n", network->_node_idx, nodeNeuronNum, nodeSynapseNum);
+	//printf("Thread %d NeuronTypeNum: %d, SynapseTypeNum: %d\n", network->_node_idx, nTypeNum, sTypeNum);
+	//printf("Thread %d NeuronNum: %d, SynapseNum: %d\n", network->_node_idx, nodeNeuronNum, nodeSynapseNum);
 	
 	//int dataOffset = network->_node_idx * network->_node_num;
 	//int dataIdx = network->_node_idx * network->_node_num + network->_node_idx;
 
 	int MAX_DELAY = pCpuNet->MAX_DELAY;
-	printf("Thread %d MAX_DELAY: %d\n", network->_node_idx, pCpuNet->MAX_DELAY);
+	//printf("Thread %d MAX_DELAY: %d\n", network->_node_idx, pCpuNet->MAX_DELAY);
 
 	init_connection<<<1, 1>>>(c_pGpuNet->pN2SConnection);
 
@@ -142,12 +152,12 @@ void * run_thread(void *para) {
 	}
 #endif
 
-	for (int i=0; i<nTypeNum; i++) {
+	/*for (int i=0; i<nTypeNum; i++) {
 		cout << "Thread " << network->_node_idx << " " << pCpuNet->nTypes[i] << ": <<<" << updateSize[c_pGpuNet->nTypes[i]].gridSize << ", " << updateSize[c_pGpuNet->nTypes[i]].blockSize << ">>>" << endl;
 	}
 	for (int i=0; i<sTypeNum; i++) {
 		cout << "Thread " << network->_node_idx << " " << pCpuNet->sTypes[i] << ": <<<" << updateSize[c_pGpuNet->sTypes[i]].gridSize << ", " << updateSize[c_pGpuNet->sTypes[i]].blockSize << ">>>" << endl;
-	}
+	}*/
 
 	//int * c_g_cross_id = gpuMalloc<int>(global_cross_data[dataIdx]._max_n_num); 
 
@@ -161,6 +171,9 @@ void * run_thread(void *para) {
 	//struct timeval t0, t1, t2, t3, t4, t5,/* t6,*/ t7, t8, t9;
 	//double barrier1_time = 0, gpu_cpy_time = 0, peer_cpy_time = 0, barrier2_time=0, copy_time = 0;
 	gettimeofday(&ts, NULL);
+	cudaDeviceSynchronize();
+	pthread_barrier_wait(&setup_barrier);
+	timer t;
 	for (int time=0; time<network->_sim_cycle; time++) {
 		for (int i=0; i<nTypeNum; i++) {
 			assert(c_pGpuNet->neuronNums[i+1]-c_pGpuNet->neuronNums[i] > 0);
@@ -261,7 +274,13 @@ void * run_thread(void *para) {
 		//pthread_barrier_wait(&cycle_barrier);
 		update_time<<<1, 1>>>();
 	}
+	cudaDeviceSynchronize();
 	pthread_barrier_wait(&cycle_barrier);
+	if (network->_node_idx == 0)
+	{
+		double tsim = t.stop();
+		printf("\"simtime\": %f\n", tsim / (network->_dt * network->_sim_cycle));
+	}
 	gettimeofday(&te, NULL);
 	long seconds = te.tv_sec - ts.tv_sec;
 	long hours = seconds/3600;
@@ -274,7 +293,7 @@ void * run_thread(void *para) {
 		seconds = seconds - 1;
 	}
 
-	printf("Thread %d Simulation finesed in %ld:%ld:%ld.%06lds\n", network->_node_idx, hours, minutes, seconds, uSeconds);
+	//printf("Thread %d Simulation finesed in %ld:%ld:%ld.%06lds\n", network->_node_idx, hours, minutes, seconds, uSeconds);
 	//printf("Thread %d cost : barrier1 %lf, DtoH %lf, DtoD %lf, barrier2 %lf, HtoD %lf\n", network->_node_idx, barrier1_time, gpu_cpy_time, peer_cpy_time, barrier2_time, copy_time);
 
 	int *rate = (int*)malloc(sizeof(int)*nodeNeuronNum);

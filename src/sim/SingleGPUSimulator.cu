@@ -8,6 +8,7 @@
 #include <iostream>
 
 #include "../utils/utils.h"
+#include "../utils/timer.h"
 #include "../utils/TypeFunc.h"
 #include "../gpu_utils/mem_op.h"
 #include "../gpu_utils/gpu_func.h"
@@ -30,7 +31,7 @@ SingleGPUSimulator::~SingleGPUSimulator()
 
 int SingleGPUSimulator::run(real time, FireInfo &log)
 {
-
+	timer t;
 	int sim_cycle = round(time/dt);
 
 	reset();
@@ -144,6 +145,12 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 	fprintf(info_file, "Start runing for %d cycles\n", sim_cycle);
 	struct timeval ts, te;
 	gettimeofday(&ts, NULL);
+	cudaDeviceSynchronize();
+	{
+		double tsetup = t.stop();
+		printf("\"setuptime\": %f,\n", tsetup);
+	}
+	t = timer();
 	for (int time=0; time<sim_cycle; time++) {
 		//printf("Cycle: %d ", time);
 		//fflush(stdout);
@@ -249,6 +256,10 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 		update_time<<<1, 1>>>();
 	}
 	cudaDeviceSynchronize();
+	{
+		double tsim = t.stop();
+		printf("\"simtime\": %f\n", tsim / time);
+	}
 
 	gettimeofday(&te, NULL);
 	long seconds = te.tv_sec - ts.tv_sec;

@@ -986,6 +986,7 @@ void check(T result, char const *const func, const char *const file, int const l
 {
     if (result)
     {
+		throw std::runtime_error(cudaGetErrorString(result));
         fprintf(stderr, "CUDA error at %s:%d code=%d(%s) \"%s\" \n",
                 file, line, static_cast<unsigned int>(result), _cudaGetErrorEnum(result), func);
         DEVICE_RESET

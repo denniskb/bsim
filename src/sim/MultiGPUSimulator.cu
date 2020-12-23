@@ -84,10 +84,7 @@ int MultiGPUSimulator::run(real time, FireInfo &log)
 	}
 
 	pthread_barrier_wait(&setup_barrier);
-	{
-		double tsetup = t.stop();
-		printf("\"setuptime\": %f,\n", tsetup);
-	}
+	double tsetup = t.stop();
 
 	for (int i=0; i<device_count; i++) {
 		pthread_join(thread_ids[i], NULL);
@@ -96,7 +93,7 @@ int MultiGPUSimulator::run(real time, FireInfo &log)
 	pthread_barrier_destroy(&cycle_barrier);
 	pthread_barrier_destroy(&setup_barrier);
 
-	return 0;
+	return tsetup * 1000;
 }
 
 void * run_thread(void *para) {
@@ -279,7 +276,7 @@ void * run_thread(void *para) {
 	if (network->_node_idx == 0)
 	{
 		double tsim = t.stop();
-		printf("\"simtime\": %f\n", tsim / (network->_dt * network->_sim_cycle));
+		printf("\"simtime\": %f,\n", tsim / (network->_dt * network->_sim_cycle));
 	}
 	gettimeofday(&te, NULL);
 	long seconds = te.tv_sec - ts.tv_sec;

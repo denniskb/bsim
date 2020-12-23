@@ -1,5 +1,6 @@
 #include "../../include/BSim.h"
 #include "../../src/utils/random.h"
+#include "../../src/utils/timer.h"
 
 
 using namespace std;
@@ -80,13 +81,16 @@ void make_synth(Network & c, int const n, float const p_fire, float const p_conn
 
 int main(int argc, char **argv)
 {
-	Network c;
-	//make_brunel(c, 20000);
-	//make_vogels(c, 4000);
-	make_synth(c, 2000000, 0.001, 0.00001);
+	timer t;
 
+	Network c;
+	make_brunel(c, 20000);
+	//make_vogels(c, 4000);
+	//make_synth(c, 2000000, 0.001, 0.00001);
 	SGSim sg(&c, 0.0001f);
-	sg.run(0.1f);
+	double tsetup = t.stop() + 1e-3 * sg.run(0.1f);
+
+	printf("\"setuptime\": %f\n", tsetup);
 
 	return 0;
 } 

@@ -146,10 +146,7 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 	struct timeval ts, te;
 	gettimeofday(&ts, NULL);
 	cudaDeviceSynchronize();
-	{
-		double tsetup = t.stop();
-		printf("\"setuptime\": %f,\n", tsetup);
-	}
+	double tsetup = t.stop();
 	t = timer();
 	for (int time=0; time<sim_cycle; time++) {
 		//printf("Cycle: %d ", time);
@@ -258,7 +255,7 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 	cudaDeviceSynchronize();
 	{
 		double tsim = t.stop();
-		printf("\"simtime\": %f\n", tsim / time);
+		printf("\"simtime\": %f,\n", tsim / time);
 	}
 
 	gettimeofday(&te, NULL);
@@ -325,6 +322,6 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 	freeGPUNetwork(c_pGpuNet);
 	freeGNetwork(pCpuNet);
 
-	return 0;
+	return tsetup * 1000;
 }
 

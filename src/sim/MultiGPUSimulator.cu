@@ -276,7 +276,7 @@ void * run_thread(void *para) {
 	if (network->_node_idx == 0)
 	{
 		double tsim = t.stop();
-		printf("\"simtime\": %f,\n", tsim / (network->_dt * network->_sim_cycle));
+		printf("\t\"simtime\": %f,\n", tsim / (network->_dt * network->_sim_cycle));
 	}
 	gettimeofday(&te, NULL);
 	long seconds = te.tv_sec - ts.tv_sec;

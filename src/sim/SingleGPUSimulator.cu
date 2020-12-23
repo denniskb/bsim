@@ -255,7 +255,7 @@ int SingleGPUSimulator::run(real time, FireInfo &log)
 	cudaDeviceSynchronize();
 	{
 		double tsim = t.stop();
-		printf("\"simtime\": %f,\n", tsim / time);
+		printf("\t\"simtime\": %f,\n", tsim / time);
 	}
 
 	gettimeofday(&te, NULL);

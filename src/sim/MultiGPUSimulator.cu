@@ -35,7 +35,7 @@ MultiGPUSimulator::MultiGPUSimulator(Network *network, real dt) : SimulatorBase(
 MultiGPUSimulator::~MultiGPUSimulator()
 {
 }
-
+static bool except = false;
 void *run_thread(void *para);
 int MultiGPUSimulator::run(real time, FireInfo &log)
 {
@@ -93,12 +93,16 @@ int MultiGPUSimulator::run(real time, FireInfo &log)
 	pthread_barrier_destroy(&cycle_barrier);
 	pthread_barrier_destroy(&setup_barrier);
 
+	if (except) throw std::runtime_error("err in thread");
+
 	return tsetup * 1000;
 }
 
 void * run_thread(void *para) {
+	bool waited = false;
+	try {
 	DistriNetwork *network = (DistriNetwork*)para;
-
+	
 	char log_filename[512];
 	sprintf(log_filename, "GSim_%d.log", network->_node_idx); 
 	FILE *log_file = fopen(log_filename, "w+");
@@ -170,6 +174,8 @@ void * run_thread(void *para) {
 	gettimeofday(&ts, NULL);
 	cudaDeviceSynchronize();
 	pthread_barrier_wait(&setup_barrier);
+	waited = true;
+	if (except) return NULL;
 	timer t;
 	for (int time=0; time<network->_sim_cycle; time++) {
 		for (int i=0; i<nTypeNum; i++) {
@@ -316,6 +322,10 @@ void * run_thread(void *para) {
 
 	free_buffers(buffers);
 	freeGPUNetwork(c_pGpuNet);
+	} catch (...) {
+		except = true;
+		if (!waited) pthread_barrier_wait(&setup_barrier);
+	}
 
 	return NULL;
 }

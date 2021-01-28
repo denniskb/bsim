@@ -1400,7 +1400,7 @@ void benchfun( model m, gpu g, int nneuron, double pconnect, int delay, double p
 		}
 
 		double tsetup = t.stop();
-		tsetup += sg->run(1) * 1e-3;
+		tsetup += sg->run(10) * 1e-3;
 		printf("\t\"setuptime\": %f\n", tsetup);
 	} catch (...) {
 		printf("\t\"simtime\": -1,\n");
